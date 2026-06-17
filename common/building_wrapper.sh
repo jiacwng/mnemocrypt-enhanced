@@ -4,6 +4,13 @@
 script_dir="$(dirname "$(readlink -f "$0")")"
 cd "$script_dir"
 
+# Auto-logging: tee all output to a timestamped log file in libs_src/
+log_file="$script_dir/../libs_src/build_log_${1}_${2:-tool}_$(date +%Y%m%d_%H%M%S).txt"
+mkdir -p "$(dirname "$log_file")"
+exec > >(tee -a "$log_file") 2>&1
+echo "[building_wrapper.sh] Script directory: $script_dir"
+echo "[building_wrapper.sh] Log file: $log_file"
+
 # Define the path to the IDA tool
 idat_path="" # To be assigned by the user! Example "/mnt/c/Users/john/Programs/IDA_Pro_9.0/idat.exe"
 if [ -z $idat_path ]; then
@@ -11,6 +18,7 @@ if [ -z $idat_path ]; then
     echo "Quitting..."
     exit 1
 fi
+echo "[building_wrapper.sh] Using IDA path: $idat_path"
 
 # Directories for input and output
 raw_executables_dir_tool="../tool/raw_executables"

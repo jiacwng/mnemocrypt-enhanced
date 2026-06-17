@@ -170,8 +170,8 @@ for func_ea in idautils.Functions():
                             except:
                                 pass
 
-                    nb_instr += vectorized_weight
-                    bb_raw_features["nb_instr"] += vectorized_weight
+                    nb_instr += 1
+                    bb_raw_features["nb_instr"] += 1
                     nb_parts_mnem = len(mnemonic.split(" "))
                     # Initilization values that normally should change
                     retained_category, retained_root = None, None
@@ -214,7 +214,7 @@ for func_ea in idautils.Functions():
                         retained_category, retained_root = "data_transfer", "mov"
 
                     if retained_root in {"mov", "cmov"}:
-                        nb_mov_instr += vectorized_weight
+                        nb_mov_instr += 1
 
                     if nb_parts_mnem == 1:
                         idx_root_beginning = mnemonic.index(retained_root)
@@ -223,8 +223,12 @@ for func_ea in idautils.Functions():
                             immediate_non_crypto_functions.add(func_name)
                             break
 
-                    bb_raw_features[retained_category] += vectorized_weight
-                    mnemonic_category_counts[retained_category] += vectorized_weight
+                    # Category-selective SIMD weighting: amplify only arithmetic/logic counts.
+                    # nb_instr and nb_mov_instr are kept scalar so Caballero ratio denominators
+                    # are not inflated equally with the numerator (which would make the ratio a no-op).
+                    effective_weight = vectorized_weight if retained_category in {"arithmetic", "logic"} else 1
+                    bb_raw_features[retained_category] += effective_weight
+                    mnemonic_category_counts[retained_category] += effective_weight
 
                     # Caballero heuristics related computations
                     if retained_category in {"arithmetic", "logic"}:
