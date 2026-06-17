@@ -1,0 +1,175 @@
+This file explains the content of "categories.json"
+
+Data transfer:
+    MOV - move data
+    XCH - exchange data
+    IN - transfer data from input
+    OUT - transfer data to output
+    LEA - load effective address
+    LD - load
+    LES - load far pointer
+    LAHF - Load Status Flags Into AH Register
+    SAHF - Store AH Into Flags
+    UNPCK - unpack
+    INSR - insert Byte/Dword/Qword
+    INSER - insert
+    XTR - extract (for FXTRACT)
+    EXTR - extract
+    ST - store
+    RD - read
+    WR - write
+    BROADCAST - load with broadcast
+    SLDT - store local descriptor table register (DTR)
+    SGDT - store global DTR
+    SIDT - store interrupt DTR
+    LLDT - load local DTR
+    LGDT - load global DTR
+    LIDT - load interrupt DTR
+    PREFETCH - prefetch
+    BLD - load binary-coded decimal (BCD)
+    BST - store BCD and pop
+    PACK - pack
+    ALIGN - align data
+    XLAT - table lookup translation
+    MOVSX - move with sign extension
+
+Arithmetic:
+    ADD - add
+    ADC - add with carry
+    INC - increment
+    SUB - substract
+    SBB - substract with borrow
+    DEC - decrement
+    NEG - negate number
+    AA - ASCII adjust
+    DA - decimal adjust
+    MUL - multiply
+    DIV - divide
+    CBW - convert byte to word
+    CWD - convert word to double word
+    CDQ - convert double to quad word
+    CVT - convert
+    XADD - exchange and add
+    CLMUL - carryless multiplication
+    RDRAND - Retrieves a random number generated from hardware
+    RDSEED - Retrieves a random number generated from hardware
+    MAX - maximum
+    MIN - minimum
+    MADD - multiply and add
+    SCALE - scale (i.e. multiply by a constant value)
+    FYL2X - Compute y ∗ log2x
+    F2XM1 - Compute 2x–1
+    ABS - absolute value
+    SQRT - square root
+    SIN - sinus
+    COS - cosinus
+    ATAN - arctangent
+    TAN - tangent
+    RCP - reciprocal of value
+    RSQ - reciprocal square root of value
+    CMP - compare two operands
+    PREM - partial remainder
+    ACC - accumulate
+    NACC - numerical accumulate (?)
+    PNACC - packed numerical accumulate (?)
+    COM - compare and set flags in EFLAGS register
+    SAD - sum of absolute differences
+    CHS - change sign
+    ROUND - round
+    RNDINT - round to integer
+    PTAN - partial tangent
+    PATAN - partial arctangent
+
+Logic:
+    NOT - bitwise logical NOT
+    SH - logical shift
+    SA - arithmetic shift
+    RO - rotate
+    RC - rotate through carry
+    AND - bitwise logical AND
+    TEST - logical compare
+    OR - bitwise logical OR
+    XOR - bitwise logical XOR
+    SET - set byte
+    SHUF - shuffle
+    BT - bit test
+    SRA - shift right arithmetic (for MMX shuift)
+    SLA - shift left arithmetic (for MMX shuift)
+    SRL - shift left logical (for MMX shuift)
+    SLL - shift left logical (for MMX shuift)
+    ZERO - set to zero
+    PERM - permute
+    SWAP - swap
+    BSWAP - byte swap (just for BSWAP)
+    TST - test floating-point (i.e. compare with 0.0) (just for FTST)
+    BLEND - blend
+    CMOV - conditional move
+    ANDN - bitwise logical NAND
+    XNOR - bitwise logical XNOR
+    BS - bit scan
+    TZCNT - Count the number of trailing zero bits
+    LZCNT - Count the number of leading zero bits
+    POPCNT - Count the number of bits set to 1
+    BLS - lowest set bit
+    CRC - cyclic redundancy check
+
+String manipulation:
+    MOVS - move string
+    CMPS - compare strings
+    SCAS - scan string
+    LODS - load string
+    STOS - store string
+    REP - repeat string operations
+    CMPESTR - compare explicit-length strings
+    CMPISTR - compare implicit-length strings
+
+Control transfer:
+    CALL - function call
+    J - jump
+    RET - return
+    LOOP - loop
+    ENDBR - terminate an indirect branch
+    BOUND - check if a value is in a range (exception raised if not)
+    ENTER - High-level procedure entry
+    LEAVE - High-level procedure exit
+    XBEGIN - Transaction begin of an RTM transaction region
+    XEND - Transaction end of an RTM transaction region
+
+Process control:
+    CMC - complement the carry flag
+    STC - set carry flag
+    CL - reset
+    STD - set direction flag
+    STI - set interrupt flag
+    HLT - halt processor
+    WAIT - wait for FPU
+    ESC - interface with external coprocessors
+    LOCK - atomic access to memory
+    INIT - initialize FPU
+    SFENCE - serializes store operations
+    LFENCE - serializes load operations
+    MFENCE - serializes load and store operations
+    PAUSE - spin loop hint
+    TPAUSE - timed pause
+    FREE - free reguster
+    ICEBP - Interrupt on Circuit Emulation Breakpoint
+    WB - write back data
+    CLWB - ache Line Write Back
+    CPUID - CPU identification
+    SAVE - save
+    GETBV - Get Value of Extended Control Register
+    BND - lower bound related
+    RSTOR - restore
+    ABORT - abort
+    INT - software interrupt
+    IRET - return from interrupt
+    FXAM - examine floating-point
+    ARPL - adjust requested privilege level
+    SYS - syscall
+    RDRAND - Retrieves a random number generated from hardware
+    RDSEED - Retrieves a random number generated from hardware
+    EMMS - Empty MMX state
+
+Crypto:
+    AES - AESNI extension instructions
+    SHA - SHA extension instructions

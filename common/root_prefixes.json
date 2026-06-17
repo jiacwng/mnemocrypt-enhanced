@@ -1,0 +1,10 @@
+{
+    "Data transfer": ["f", "p", "v", "vp", "k", "fn", "fi"],
+    "Arithmetic": ["f", "p", "v", "vp", "k", "i", "fi", "u", "fu", "h", "ph", "pf"],
+    "Logic": ["f", "p", "v", "vp", "k"],
+    "String manipulation": [],
+    "Control transfer": [],
+    "Process control": ["f", "fn", "x", "fx"],
+    "Crypto": ["v"]
+}
+

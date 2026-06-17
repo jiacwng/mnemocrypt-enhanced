@@ -1,0 +1,44 @@
+This file explains the content of "root_prefixes.json"
+
+Data transfer:
+    F - X87 FPU
+    P - MMX, SSE
+    V - AVX-512
+    VP - AVX-512
+    K - AVX-512
+    FN - X87 FPU
+    FI - SSE3
+
+Arithmetic:
+    F - X87 FPU
+    P - MMX, SSE
+    V - AVX-512
+    VP - AVX-512
+    K - AVX-512
+    I - "integer"
+    FI - X87 FPU + "integer"
+    U - "unsigned"
+    FU - X87 FPU + "unsigned"
+    H - SSE3
+    PH - SSSE3
+    PF - 3DNow!
+
+Logical:
+    F - X87 FPU
+    P - MMX, SSE
+    V - AVX-512
+    VP - AVX-512
+    K - AVX-512
+
+String manipulation:
+
+Control transfer:
+
+Process control:
+    F - X87 FPU
+    FN - X87 FPU
+    X - standard
+    FX - X87 FPU + standard
+
+Crypto:
+    V - AVX-512

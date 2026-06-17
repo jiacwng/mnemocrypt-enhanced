@@ -1,0 +1,4 @@
+mov = {mov, movsx} #data mov
+add = {add, adc, xadd} #addition
+sh = {sh, srl, sll, sa, sra, sla} #shift
+ro = {ro, rc} #rotation
