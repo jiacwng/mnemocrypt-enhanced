@@ -1,9 +1,7 @@
-7zip
 brotli_gcc_x64_O0
 brotli_gcc_x64_O2
 brotli_gcc_x86_O0
 brotli_gcc_x86_O2
-bzip2
 freetype_gcc_x64_O0
 freetype_gcc_x64_O2
 freetype_gcc_x86_O0
@@ -37,10 +35,6 @@ libsodium_gcc_O2
 libsodium_gcc_O3
 libsodium_gcc_Ofast
 libsodium_gcc_Os
-libsodium_msvc_O1
-libsodium_msvc_O2
-libsodium_msvc_Od
-libsodium_msvc_Ox
 libtomcrypt_gcc_x64_O0
 libtomcrypt_gcc_x64_O2
 libtomcrypt_gcc_x86_O0
@@ -57,7 +51,6 @@ lz4_gcc_x64_O0
 lz4_gcc_x64_O2
 lz4_gcc_x86_O0
 lz4_gcc_x86_O2
-lzma
 mbedtls_gcc_x64_O0
 mbedtls_gcc_x64_O2
 mbedtls_gcc_x86_O0
@@ -79,10 +72,6 @@ openssl_gcc_O2
 openssl_gcc_O3
 openssl_gcc_Ofast
 openssl_gcc_Os
-openssl_msvc_O1
-openssl_msvc_O2
-openssl_msvc_Od
-openssl_msvc_Ox
 snappy_gcc_x64_O0
 snappy_gcc_x64_O2
 snappy_gcc_x86_O0
@@ -95,7 +84,6 @@ wolfssl_gcc_x64_O0
 wolfssl_gcc_x64_O2
 wolfssl_gcc_x86_O0
 wolfssl_gcc_x86_O2
-zlib_minizip
 zstd_gcc_x64_O0
 zstd_gcc_x64_O2
 zstd_gcc_x86_O0

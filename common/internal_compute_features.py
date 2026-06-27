@@ -11,28 +11,9 @@ from statistics import mean, stdev, median
 
 idaapi.auto_wait()
 
-# Debug: Verify script is running
-print(f"[DEBUG] Features computation script started")
-print(f"[DEBUG] Processing: {idc.get_root_filename()}")
-
 # Constants declaration
 basename = idc.get_root_filename().split('.', 1)[0]
 script_dirpath = os.path.dirname(os.path.abspath(__file__))
-
-# Detect architecture (x86-32 vs x86-64)
-try:
-    inf = idaapi.get_inf_structure()
-    is_64bit = inf.is_64bit()
-    architecture = "x86-64" if is_64bit else "x86-32"
-    print(f"[DEBUG] Architecture detected: {architecture} (is_64bit: {is_64bit})")
-except Exception as e:
-    print(f"[ERROR] Failed to detect architecture: {e}")
-    # Default to x86-32 if detection fails
-    is_64bit = False
-    architecture = "x86-32"
-
-# Debug log file for vectorized instruction detection
-debug_log_path = os.path.join(script_dirpath, os.pardir, "tool", "vectorized_debug.log")
 
 with open(os.path.join(script_dirpath, "training_set_basenames_listing.txt"), 'r') as file:
     crypto_basenames = [line.rstrip() for line in file]
@@ -53,8 +34,6 @@ computed_features = {}
 unwanted_prefixes = {"__", "___", "@", "std::"} # We assume that if a function starts with one of these sequences, it is a priori non-cryptographic
 round_precision = 3 # Compromise between precision and complexity
 
-# Initialize counter for vectorized instructions detected
-vectorized_count = 0
 # We assume that if a function is made of a single basic block with less than 3 instructions (without counting ones with pop, push, nop or ud mnemonics)
 # and not containing any mnemonic from cryptographic extension sets, then it is a prirori non-cryptographic
 small_func_nb_mnemonics_threshold = 3
@@ -135,40 +114,41 @@ for func_ea in idautils.Functions():
                     if (mnemonic in {"nop", "fnop"}) or mnemonic.startswith(("pop", "push", "ud")):
                         continue
 
-                    # Task 34: Detect vectorized instructions and apply weight multiplier
-                    # SSE instructions start with 'p' prefix, AVX instructions start with 'v' prefix
-                    vectorized_weight = 1  # Default weight for non-vectorized instructions
-                    if len(mnemonic) > 1:
-                        if mnemonic.startswith('p'):
-                            # SSE instruction (p-prefix, e.g., paddd, pmuludq, pxor)
-                            vectorized_weight = 4
-                            # Debug: Log vectorized instruction detection
-                            vectorized_count += 1
-                            # Use multiple methods to ensure output is visible
-                            debug_msg = f"[DEBUG] SSE instruction detected: {mnemonic} in function {func_name} (weight: {vectorized_weight})\n"
-                            print(debug_msg, end='')
-                            idaapi.msg(debug_msg)
-                            # Also write to log file as backup
-                            try:
-                                with open(debug_log_path, 'a') as f:
-                                    f.write(f"{basename}: {debug_msg}")
-                            except:
-                                pass
-                        elif mnemonic.startswith('v'):
-                            # AVX instruction (v-prefix, e.g., vpxor, vaesenc, vpclmulqdq)
-                            vectorized_weight = 4
-                            # Debug: Log vectorized instruction detection
-                            vectorized_count += 1
-                            # Use multiple methods to ensure output is visible
-                            debug_msg = f"[DEBUG] AVX instruction detected: {mnemonic} in function {func_name} (weight: {vectorized_weight})\n"
-                            print(debug_msg, end='')
-                            idaapi.msg(debug_msg)
-                            # Also write to log file as backup
-                            try:
-                                with open(debug_log_path, 'a') as f:
-                                    f.write(f"{basename}: {debug_msg}")
-                            except:
-                                pass
+                    # Vector (SIMD) instructions process multiple values at once. To count them
+                    # accurately relative to scalar instructions, we count them as multiple operations
+                    # based on the number of data "lanes" they use.
+                    # Lanes = register size (xmm=128, ymm=256, zmm=512 bits) / element size (read from the suffix).
+                    # We check actual vector registers to identify them, which avoids false positives 
+                    # from scalar instructions that happen to start with 'p' or 'v' (like 'popcnt' or 'pause').
+                    vectorized_weight = 1
+                    reg_width = 0
+                    for op_i in range(4):  # x86 instructions have at most a handful of operands
+                        if idc.get_operand_type(head_ea, op_i) == idc.o_reg:
+                            op = idc.print_operand(head_ea, op_i)
+                            if "zmm" in op:
+                                reg_width = max(reg_width, 512)
+                            elif "ymm" in op:
+                                reg_width = max(reg_width, 256)
+                            elif "xmm" in op:
+                                reg_width = max(reg_width, 128)
+                    # Only scale packed operations. Scalar SIMD instructions (with 'ss' or 'sd' suffixes)
+                    # only process one element at a time, so we don't apply the lane multiplier.
+                    if reg_width and not mnemonic.endswith(("ss", "sd")):
+                        if mnemonic.endswith("ps"):
+                            element_size = 32
+                        elif mnemonic.endswith("pd"):
+                            element_size = 64
+                        elif mnemonic.endswith("b"):
+                            element_size = 8
+                        elif mnemonic.endswith("w"):
+                            element_size = 16
+                        elif mnemonic.endswith("d"):
+                            element_size = 32
+                        elif mnemonic.endswith("q"):
+                            element_size = 64
+                        else:
+                            element_size = 32  # If we don't recognize the size suffix (like in 'pxor'), default to 32-bit elements.
+                        vectorized_weight = reg_width // element_size
 
                     nb_instr += 1
                     bb_raw_features["nb_instr"] += 1
@@ -321,9 +301,6 @@ for func_ea in idautils.Functions():
         func_info["adjusted_caballero_ratio"] = adjusted_caballero_ratio
         func_info["asymmetric_caballero_ratio"] = asymmetric_caballero_ratio
         func_info["crypto"] = 1 if (is_training_data and (func_name in crypto_functions)) else 0
-        # Add architecture information
-        func_info["architecture"] = architecture
-        func_info["is_64bit"] = 1 if is_64bit else 0
 
         # Compute statistics-related features
         for feature in merged_caballero_roots:
@@ -392,22 +369,5 @@ df = df[sorted(df.columns)]
 # Fill NaN values with 0
 df.fillna(0, inplace=True)
 df.to_csv(output_filepath, index=False)
-
-# Write summary to debug log
-try:
-    with open(debug_log_path, 'a') as f:
-        f.write(f"\n=== Summary for {basename} ===\n")
-        f.write(f"Total vectorized instructions detected: {vectorized_count}\n")
-        f.write(f"Total functions processed: {len(computed_features)}\n")
-        f.write(f"CSV file written to: {output_filepath}\n\n")
-except:
-    pass
-
-# Print summary to console
-if vectorized_count > 0:
-    print(f"\n[SUMMARY] {basename}: Detected {vectorized_count} vectorized instructions (SSE/AVX)")
-    print(f"[SUMMARY] Debug log written to: {debug_log_path}")
-else:
-    print(f"\n[SUMMARY] {basename}: No vectorized instructions detected (or none present in this binary)")
 
 idc.qexit()

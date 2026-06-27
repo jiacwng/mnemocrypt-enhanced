@@ -12,7 +12,7 @@ echo "[building_wrapper.sh] Script directory: $script_dir"
 echo "[building_wrapper.sh] Log file: $log_file"
 
 # Define the path to the IDA tool
-idat_path="" # To be assigned by the user! Example "/mnt/c/Users/john/Programs/IDA_Pro_9.0/idat.exe"
+idat_path="/mnt/c/Users/Jiach/Documents/IDA Professional 9.0/idat.exe"
 if [ -z $idat_path ]; then
     echo "[building_wrapper.sh] Error: please assign idat_path variable with your path to idat.exe!"
     echo "Quitting..."
