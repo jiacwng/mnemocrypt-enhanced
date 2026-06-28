@@ -6,7 +6,7 @@ cd "$script_dir"
 
 # Define the path to the IDA tool
 idat_path="" # To be assigned by the user! Example "/mnt/c/Users/john/Programs/IDA_Pro_9.0/idat.exe"
-if [ -z $idat_path ]; then
+if [ -z "$idat_path" ]; then
     echo "[plugin_batch.sh] Error: please assign idat_path variable with your path to idat.exe!"
     echo "Quitting..."
     exit 1

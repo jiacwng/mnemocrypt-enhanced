@@ -8,6 +8,8 @@ libs_src/build_log*.txt
 libs_src/build_log.txt
 
 tool/baseline_predictions.csv
+tool/findcrypt_matches.csv
+tool/findcrypt_tags.json
 tool/immediate_crypto_functions.json
 tool/immediate_non_crypto_functions.json
 tool/unrecognized_mnemonics.json
@@ -18,9 +20,12 @@ training/unrecognized_mnemonics.json
 
 training/ida_databases/
 tool/ida_databases/
+training/raw_executables/
+tool/raw_executables/
 
 chart_*.png
 mnemocrypt_comparison_report.pdf
+
 portfolio/
 
 training/computed_features/

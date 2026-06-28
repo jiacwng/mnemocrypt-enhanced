@@ -51,6 +51,91 @@ immediate_crypto_functions = {}
 immediate_non_crypto_functions = set()
 crypto_instructions_sets = {"aes": "AES-NI", "sha": "Intel SHA extensions"}
 
+# ---------------------------------------------------------------------------
+# Operand-level feature experiment reference (not active in the deployed model)
+#
+# The project tested an operand-level feature extractor that looked beyond mnemonics and
+# read instruction operands. The idea was to add six per-function features:
+#   - nb_large_immediates
+#   - immediate_value_entropy
+#   - nb_known_crypto_constants
+#   - max_data_blob_size
+#   - max_data_blob_entropy
+#   - nb_high_entropy_tables
+#
+# The relevant implementation was intentionally left here as commented
+# reference code instead of shipping it, because the model transfer result was
+# negative. On the labeled holdout it improved recall from 0.456 to 0.473, but
+# on malware it dropped detections from 962 functions / 86 binaries to
+# 495 functions / 87 binaries. It also lowered false positives on the held-out
+# goodware set from 11 to 7, but the malware function-level loss made the
+# deployed model worse for the actual use case.
+#
+# Explanation:
+#   Crypto code sometimes exposes distinctive data through operands: SHA/MD5
+#   constants, TEA/CRC constants, or references to large random-looking tables
+#   such as AES S-boxes. The experiment counted large immediates, measured byte
+#   entropy of immediate values, matched a short list of known constants, and
+#   measured size/entropy for referenced data blobs. The useful signal did not
+#   transfer well to malware because optimized samples often load constants from
+#   data sections or spread crypto across functions, so exact operand-level
+#   signatures were sparse and brittle.
+#
+# Reference code:
+#
+# def byte_entropy(data):
+#     if not data:
+#         return 0
+#     counts = Counter(data)
+#     total = len(data)
+#     return -sum((c / total) * math.log2(c / total) for c in counts.values())
+#
+# known_crypto_constants = {
+#     0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
+#     0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6,
+#     0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
+#     0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
+#     0x428A2F98, 0xD76AA478,
+#     0x9E3779B9, 0xB7E15163, 0x243F6A88,
+#     0xEDB88320, 0x04C11DB7,
+# }
+#
+# blob_cache = {}
+# nb_large_immediates, nb_known_crypto_constants = 0, 0
+# immediate_bytes = bytearray()
+# max_data_blob_size, max_data_blob_entropy, nb_high_entropy_tables = 0, 0, 0
+#
+# for op_i in range(4):
+#     if idc.get_operand_type(head_ea, op_i) == idc.o_imm:
+#         value = idc.get_operand_value(head_ea, op_i) & 0xFFFFFFFFFFFFFFFF
+#         if value > 0xFFFF:
+#             nb_large_immediates += 1
+#             immediate_bytes += value.to_bytes(8, "little").rstrip(b"\x00")
+#         if value in known_crypto_constants or (value & 0xFFFFFFFF) in known_crypto_constants:
+#             nb_known_crypto_constants += 1
+#
+# for ref_ea in unique_data_refs:
+#     if ref_ea not in blob_cache:
+#         size = idc.get_item_size(ref_ea)
+#         data_bytes = idc.get_bytes(ref_ea, min(size, 1024)) if size and size >= 16 else None
+#         blob_cache[ref_ea] = (
+#             size,
+#             round(byte_entropy(data_bytes), round_precision) if data_bytes else 0,
+#         )
+#     size, ent = blob_cache[ref_ea]
+#     max_data_blob_size = max(max_data_blob_size, size)
+#     max_data_blob_entropy = max(max_data_blob_entropy, ent)
+#     if size >= 256 and ent >= 6.5:
+#         nb_high_entropy_tables += 1
+#
+# func_info["nb_large_immediates"] = nb_large_immediates
+# func_info["immediate_value_entropy"] = round(byte_entropy(immediate_bytes), round_precision)
+# func_info["nb_known_crypto_constants"] = nb_known_crypto_constants
+# func_info["max_data_blob_size"] = max_data_blob_size
+# func_info["max_data_blob_entropy"] = max_data_blob_entropy
+# func_info["nb_high_entropy_tables"] = nb_high_entropy_tables
+# ---------------------------------------------------------------------------
+
 if is_training_data:
     with open(os.path.join(script_dirpath, os.pardir, "training", "crypto_functions_names", basename+"_crypto_functions.json"), 'r') as file:
         crypto_functions = json.load(file).keys()
@@ -203,9 +288,10 @@ for func_ea in idautils.Functions():
                             immediate_non_crypto_functions.add(func_name)
                             break
 
-                    # Category-selective SIMD weighting: amplify only arithmetic/logic counts.
-                    # nb_instr and nb_mov_instr are kept scalar so Caballero ratio denominators
-                    # are not inflated equally with the numerator (which would make the ratio a no-op).
+                    # Apply SIMD scaling only to arithmetic and logic instructions.
+                    # We keep total instructions (nb_instr) and move instructions (nb_mov_instr)
+                    # unscaled. This prevents the Caballero ratio from cancelling itself out,
+                    # which would happen if we scaled both the numerator and denominator.
                     effective_weight = vectorized_weight if retained_category in {"arithmetic", "logic"} else 1
                     bb_raw_features[retained_category] += effective_weight
                     mnemonic_category_counts[retained_category] += effective_weight

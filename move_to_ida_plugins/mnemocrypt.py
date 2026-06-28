@@ -53,7 +53,9 @@ def classify_crypto_functions(store):
         data = pd.read_csv(computed_features_filepath)
         
         function_names = data["function_name"]
-        X_test = data.drop(columns=["function_name", "binary_name", "crypto"])
+        X_test = data.drop(columns=["function_name", "binary_name", "crypto"], errors='ignore')
+        if 'architecture' in X_test.columns:
+            X_test = X_test.drop(columns=['architecture'])
     except Exception as e:
         print(f"[Mnemocrypt] Error loading features: {e}")
         return

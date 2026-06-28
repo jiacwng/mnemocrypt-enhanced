@@ -10,8 +10,11 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 class_labels = ["non-crypto", "crypto"]
 nb_trees = 100
 common_dirpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "common")
-with open(os.path.join(common_dirpath, "training_set_basenames_listing.txt"), 'r') as file:
-    basenames = [line.rstrip() for line in file]
+# Allow overriding the basenames file via env var (e.g. for diagnostic experiments)
+_basenames_file = os.environ.get("BASENAMES_FILE", "training_set_basenames_listing.txt")
+with open(os.path.join(common_dirpath, _basenames_file), 'r') as file:
+    basenames = [line.rstrip() for line in file if line.strip()]
+print(f"Training on {len(basenames)} binaries from {_basenames_file}")
 computed_features_dirpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "computed_features")
 training_data = pd.DataFrame([])
 # Train the classifiers
@@ -30,9 +33,28 @@ X = X.drop(columns=['binary_name', 'function_name'])
 if 'architecture' in X.columns:
     X = X.drop(columns=['architecture'])
 # Keep is_64bit as a feature (it's 0 or 1, which is numerical)
-# Use SMOTE to oversample the minority class on the combined dataset
-oversample = SMOTE()
+# --- diagnostics: dataset shape and raw class balance (before SMOTE) ---
+_pre_counts = y.value_counts().to_dict()
+_pre_noncrypto = _pre_counts.get(0, 0)
+_pre_crypto = _pre_counts.get(1, 0)
+print(f"Loaded {len(training_data)} functions across {len(basenames)} binaries")
+print(f"Features: {X.shape[1]} columns")
+print(f"Pre-SMOTE  class balance -> non-crypto={_pre_noncrypto}  crypto={_pre_crypto}  "
+      f"(crypto = {(_pre_crypto / _pre_noncrypto * 100):.2f}% of non-crypto)")
+# Use SMOTE to oversample the minority class on the combined dataset.
+# sampling_strategy overridable via env var SMOTE_STRATEGY (default 0.15).
+_smote_strategy = float(os.environ.get("SMOTE_STRATEGY", "0.05"))
+print(f"SMOTE sampling_strategy = {_smote_strategy}")
+oversample = SMOTE(sampling_strategy=_smote_strategy)
 over_X, over_y = oversample.fit_resample(X, y)
+# --- Diagnostics: Check the class balance to verify SMOTE worked as expected ---
+_post_counts = over_y.value_counts().to_dict()
+_post_noncrypto = _post_counts.get(0, 0)
+_post_crypto = _post_counts.get(1, 0)
+print(f"Post-SMOTE class balance -> non-crypto={_post_noncrypto}  crypto={_post_crypto}  "
+      f"(crypto = {(_post_crypto / _post_noncrypto * 100):.2f}% of non-crypto, "
+      f"target={_smote_strategy*100:.2f}%)")
+print(f"Synthetic crypto samples generated: {_post_crypto - _pre_crypto}")
 # Build SMOTE SRF model
 model = RandomForestClassifier(n_estimators=nb_trees, random_state=42)
 # Train the model on the oversampled combined dataset
